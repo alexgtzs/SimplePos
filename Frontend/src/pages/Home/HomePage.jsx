@@ -1,7 +1,7 @@
 import React from 'react';
-import Header from '../../../components/layout/Header';
-import ImageCarousel from '../../sections/ImageCarousel';
-import SystemInfo from '../../sections/SystemInfo';
+import Header from '../../components/layout/Header';
+import ImageCarousel from '../../components/sections/ImageCarousel';
+import SystemInfo from '../../components/sections/SystemInfo';
 
 const HomePage = () => {
   return (
