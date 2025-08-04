@@ -1,26 +1,11 @@
-from flask_pymongo import PyMongo
 from pymongo import MongoClient
-from bson.objectid import ObjectId
+from dotenv import load_dotenv
+import os
 
-mongo = PyMongo()
+load_dotenv()
 
-def init_db(app):
-    mongo.init_app(app)
-    
-    # Opcional: Insertar roles iniciales si no existen
-    if mongo.db.roles.count_documents({}) == 0:
-        initial_roles = [
-            {
-                "name": "administrator",
-                "permissions": ["manage_users", "view_reports", "manage_sales"]
-            },
-            {
-                "name": "seller",
-                "permissions": ["manage_sales"]
-            },
-            {
-                "name": "consultant",
-                "permissions": ["view_reports"]
-            }
-        ]
-        mongo.db.roles.insert_many(initial_roles)
+client = MongoClient(os.getenv("MONGODB_URI", "mongodb://localhost:27017"))
+db = client[os.getenv("DATABASE_NAME", "auth_system")]
+
+def get_db():
+    return db

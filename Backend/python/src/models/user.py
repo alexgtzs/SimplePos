@@ -1,29 +1,13 @@
-from bson import ObjectId
-from werkzeug.security import generate_password_hash
+from pymongo.collection import Collection
+from database import get_db
 
-class User:
-    def __init__(self, username, email, password, role_id, active=True):
-        self.username = username
-        self.email = email
-        self.password = generate_password_hash(password)
-        self.role_id = role_id
-        self.active = active
-    
-    @staticmethod
-    def from_dict(data):
-        return User(
-            username=data['username'],
-            email=data['email'],
-            password=data['password'],
-            role_id=data['role_id'],
-            active=data.get('active', True)
-        )
-    
-    def to_dict(self):
-        return {
-            'username': self.username,
-            'email': self.email,
-            'password': self.password,
-            'role_id': self.role_id,
-            'active': self.active
-        }
+db = get_db()
+
+def get_user_collection() -> Collection:
+    return db["users"]
+
+def create_indexes():
+    user_collection = get_user_collection()
+    user_collection.create_index("username", unique=True)
+    user_collection.create_index("email", unique=True)
+    user_collection.create_index("role")

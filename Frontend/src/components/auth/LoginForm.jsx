@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext'; // Crearemos este contexto
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const LoginForm = () => {
   const [credentials, setCredentials] = useState({
@@ -9,6 +13,7 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth(); // Usaremos este hook
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,17 +29,25 @@ const LoginForm = () => {
     setError('');
     
     try {
-      // Aquí iría la llamada a tu API de autenticación
-      // Ejemplo simulado:
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const formData = new FormData();
+      formData.append('username', credentials.username);
+      formData.append('password', credentials.password);
       
-      if (credentials.username === 'admin' && credentials.password === 'admin123') {
-        navigate('/dashboard'); // Redirige al dashboard después del login
-      } else {
-        setError('Credenciales incorrectas');
-      }
+      const response = await axios.post(`${API_URL}/token`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Guardamos el token y redirigimos
+      login(response.data);
+      navigate('/admin'); // Redirige al dashboard de admin
     } catch (err) {
-      setError('Error al conectar con el servidor');
+      if (err.response) {
+        setError(err.response.data.detail || 'Credenciales incorrectas');
+      } else {
+        setError('Error al conectar con el servidor');
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +77,7 @@ const LoginForm = () => {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            autoComplete="username"
           />
         </div>
         
@@ -77,6 +91,7 @@ const LoginForm = () => {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            autoComplete="current-password"
           />
         </div>
         
@@ -90,10 +105,6 @@ const LoginForm = () => {
           {loading ? 'Iniciando sesión...' : 'Ingresar'}
         </button>
       </form>
-      
-      <div className="mt-6 text-center">
-        <a href="#" className="text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
-      </div>
     </div>
   );
 };

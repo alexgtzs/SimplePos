@@ -22,24 +22,47 @@ import AuditLogPage from './pages/admin/system/AuditLogPage';
 // Importación de la nueva página de prueba
 import TestPage from './pages/admin/TestPage';
 
-function App() {
+// Componente protegido
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isAuthenticated, role } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (requiredRole && role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
+function AppRoutes() {
   return (
     <Routes>
-    {/* Rutas Públicas */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
 
-  
-      {/* Rutas de administración */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* Rutas protegidas */}
+      <Route path="/admin" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<AdminDashboardPage />} />
         <Route path="users" element={<UserListPage />} />
-        <Route path="products" element={<ProductListPage />} />
       </Route>
       
-      {/* Ruta de error 404 */}
       <Route path="*" element={<div>Página no encontrada</div>} />
     </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
