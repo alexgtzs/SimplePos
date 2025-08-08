@@ -1,79 +1,74 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+// src/context/AuthContext.jsx
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext();
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState({
-    token: null,
-    user: null,
-    role: null
+    isAuthenticated: false,
+    role: null,
+    userData: null,
+    loading: true
   });
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  // Verificar token al cargar
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
     const role = localStorage.getItem('role');
+    const userData = JSON.parse(localStorage.getItem('userData'));
     
-    if (token && user && role) {
-      setAuthState({ token, user: JSON.parse(user), role });
+    if (token && role) {
+      setAuthState({
+        isAuthenticated: true,
+        role: role,
+        userData: userData,
+        loading: false
+      });
+    } else {
+      setAuthState({
+        isAuthenticated: false,
+        role: null,
+        userData: null,
+        loading: false
+      });
     }
-    setLoading(false);
   }, []);
 
-  const login = async (data) => {
+  const login = (data) => {
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('role', data.role);
+    localStorage.setItem('userData', JSON.stringify({
+      username: data.username,
+      email: data.email
+    }));
     
-    // Obtener información del usuario
-    try {
-      const userResponse = await axios.get(`${API_URL}/users/me`, {
-        headers: {
-          Authorization: `Bearer ${data.access_token}`
-        }
-      });
-      
-      localStorage.setItem('user', JSON.stringify(userResponse.data));
-      setAuthState({
-        token: data.access_token,
-        user: userResponse.data,
-        role: data.role
-      });
-    } catch (error) {
-      console.error("Error obteniendo datos del usuario:", error);
-      logout();
-    }
+    setAuthState({
+      isAuthenticated: true,
+      role: data.role,
+      userData: {
+        username: data.username,
+        email: data.email
+      },
+      loading: false
+    });
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
     localStorage.removeItem('role');
-    setAuthState({ token: null, user: null, role: null });
-    navigate('/login');
-  };
-
-  const value = {
-    ...authState,
-    loading,
-    login,
-    logout,
-    isAuthenticated: !!authState.token
+    localStorage.removeItem('userData');
+    setAuthState({
+      isAuthenticated: false,
+      role: null,
+      userData: null,
+      loading: false
+    });
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ ...authState, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

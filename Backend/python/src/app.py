@@ -7,6 +7,8 @@ from typing import Annotated
 import os
 from dotenv import load_dotenv
 import uvicorn
+from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 
 from schemas.user import User, UserCreate, UserInDB, UserUpdate, Token, TokenData, RoleName
 from crud.user import (
@@ -55,6 +57,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
+    to_encode.update({
+        "username": data.get("username"),
+        "email": data.get("email")
+    })
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -159,6 +165,40 @@ def consultor_reports(current_user: User = Depends(require_role(RoleName.consult
         "user": current_user.username,
         "role": current_user.role
     }
+
+# Agregar nuevos endpoints para roles
+@app.get("/admin/dashboard")
+def admin_dashboard(current_user: User = Depends(require_role(RoleName.admin))):
+    return {"message": "Dashboard de Administrador"}
+
+@app.get("/vendedor/dashboard")
+def vendedor_dashboard(current_user: User = Depends(require_role(RoleName.vendedor))):
+    return {"message": "Dashboard del Vendedor"}
+
+@app.get("/consultor/dashboard")
+def consultor_dashboard(current_user: User = Depends(require_role(RoleName.consultor))):
+    return {"message": "Dashboard del Consultor"}
+
+# Nuevo endpoint para obtener todos los usuarios (solo admin)
+@app.get("/users/", response_model=List[User])
+def get_all_users(current_user: User = Depends(require_role(RoleName.admin))):
+    return get_users()
+
+
+# app.py
+@app.get("/users/me", response_model=User)
+async def read_current_user(
+    current_user: User = Depends(get_current_active_user)
+):
+    return current_user
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todos los orígenes (en producción, cambia esto)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def print_startup_message():
     print(f"\n{'='*50}")

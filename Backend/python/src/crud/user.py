@@ -4,6 +4,7 @@ from datetime import datetime
 from schemas.user import User, UserCreate, UserInDB, UserUpdate, RoleName
 from models.user import get_user_collection
 from fastapi import HTTPException, status
+from typing import List
 
 def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -77,3 +78,10 @@ def update_user(user_id: str, user: UserUpdate) -> User:
     
     updated_user = user_collection.find_one({"_id": ObjectId(user_id)})
     return User(**updated_user)
+
+
+# Agregar esta función
+def get_users(skip: int = 0, limit: int = 100) -> List[User]:
+    user_collection = get_user_collection()
+    users = user_collection.find().skip(skip).limit(limit)
+    return [User(**user) for user in users]

@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
 
 class RoleName(str, Enum):
     admin = "admin"
@@ -12,6 +13,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     role: RoleName
+    username: str  # Nuevo campo
+    email: str     # Nuevo campo
 
 class TokenData(BaseModel):
     id: Optional[str] = None
@@ -46,3 +49,12 @@ class UserInDB(User):
 class UserLogin(BaseModel):
     username: str = Field(..., min_length=3)
     password: str = Field(..., min_length=8)
+
+
+
+class UserBasic(BaseModel):
+    id: str
+    username: str
+    email: EmailStr
+    role: RoleName
+    is_active: bool

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext'; // Crearemos este contexto
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_URL =  'http://localhost:8000';
 
 const LoginForm = () => {
   const [credentials, setCredentials] = useState({
@@ -27,24 +27,25 @@ const LoginForm = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      const formData = new FormData();
-      formData.append('username', credentials.username);
-      formData.append('password', credentials.password);
-      
-      const response = await axios.post(`${API_URL}/token`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await axios.post(`${API_URL}/token`, formData);
+
+      // Obtener información adicional del usuario
+      const userResponse = await api.get('/users/me', {
+        headers: { Authorization: `Bearer ${response.data.access_token}` }
       });
-      
-      // Guardamos el token y redirigimos
-      login(response.data);
-      navigate('/admin'); // Redirige al dashboard de admin
-    } catch (err) {
-      if (err.response) {
-        setError(err.response.data.detail || 'Credenciales incorrectas');
+
+      login({
+        ...response.data,
+        username: userResponse.data.username,
+        email: userResponse.data.email
+      });
+
+      navigate('/dashboard');
+    } catch (error) {
+      if (error.response) {
+        setError(error.response.data.detail || 'Credenciales incorrectas');
       } else {
         setError('Error al conectar con el servidor');
       }
@@ -59,13 +60,13 @@ const LoginForm = () => {
         <h2 className="text-3xl font-bold text-gray-800">Iniciar Sesión</h2>
         <p className="text-gray-600 mt-2">Accede a tu cuenta de Punto de Venta</p>
       </div>
-      
+
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
           {error}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="username" className="block text-gray-700 mb-2">Usuario</label>
@@ -80,7 +81,7 @@ const LoginForm = () => {
             autoComplete="username"
           />
         </div>
-        
+
         <div className="mb-6">
           <label htmlFor="password" className="block text-gray-700 mb-2">Contraseña</label>
           <input
@@ -94,13 +95,12 @@ const LoginForm = () => {
             autoComplete="current-password"
           />
         </div>
-        
+
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
-            loading ? 'opacity-75 cursor-not-allowed' : ''
-          }`}
+          className={`w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${loading ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
         >
           {loading ? 'Iniciando sesión...' : 'Ingresar'}
         </button>

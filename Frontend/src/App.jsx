@@ -1,41 +1,29 @@
+// src/App.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Layouts
 import AdminLayout from './components/admin/AdminLayout';
-// Páginas Públicas
+import VendedorLayout from './components/vendedor/VendedorLayout'; // Importación añadida
+import ConsultorLayout from './components/consultor/ConsultorLayout'; // Importación añadida
 
+// Páginas Públicas
 import HomePage from './pages/Home/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
+
 // Páginas de Administrador
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UserListPage from './pages/admin/users/UserListPage';
 import UserCreatePage from './pages/admin/users/UserCreatePage';
 import UserEditPage from './pages/admin/users/UserEditPage';
-import ProductListPage from './pages/admin/products/ProductListPage';
-import ProductCreatePage from './pages/admin/products/ProductCreatePage';
-import ProductEditPage from './pages/admin/products/ProductEditPage';
-import ProductCategoriesPage from './pages/admin/products/ProductCategoriesPage';
-import RolesPermissionsPage from './pages/admin/system/RolesPermissionsPage';
-import AuditLogPage from './pages/admin/system/AuditLogPage';
 
-// Importación de la nueva página de prueba
-import TestPage from './pages/admin/TestPage';
+// Nuevas páginas para vendedor y consultor
+import VendedorDashboardPage from './pages/vendedor/VendedorDashboardPage'; // Importación añadida
+import ConsultorDashboardPage from './pages/consultor/ConsultorDashboardPage'; // Importación añadida
 
 // Componente protegido
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, role } = useAuth();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 
 function AppRoutes() {
   return (
@@ -51,6 +39,26 @@ function AppRoutes() {
       }>
         <Route index element={<AdminDashboardPage />} />
         <Route path="users" element={<UserListPage />} />
+        <Route path="users/create" element={<UserCreatePage />} />
+        <Route path="users/edit/:id" element={<UserEditPage />} />
+      </Route>
+      
+      {/* Nuevas rutas para vendedor */}
+      <Route path="/vendedor" element={
+        <ProtectedRoute requiredRole="vendedor">
+          <VendedorLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<VendedorDashboardPage />} />
+      </Route>
+      
+      {/* Nuevas rutas para consultor */}
+      <Route path="/consultor" element={
+        <ProtectedRoute requiredRole="consultor">
+          <ConsultorLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<ConsultorDashboardPage />} />
       </Route>
       
       <Route path="*" element={<div>Página no encontrada</div>} />
