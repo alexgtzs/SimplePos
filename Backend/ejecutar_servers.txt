@@ -1,0 +1,12 @@
+para ejecutar node
+
+dentro de backend ejecutar el comando npm start, si es primera ves ejecutar npm install y luego npm start
+
+
+para ejecutar go 
+
+entrar a backend luego entrar a go
+
+1. cd backend
+2. cd go
+3 ejecutar comando go run main.go
