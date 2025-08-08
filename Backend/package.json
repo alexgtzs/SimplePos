@@ -6,9 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-node": "node ./node/src/server.js",
-    "start-python": "python ./python/src/app.py",
-    "start": "concurrently \"npm run start-node\" \"npm run start-python\"",
-    "start-with-logs": "concurrently -k \"npm run start-node\" \"npm run start-python\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\""
+    "start-go": "go run ./go/main.go",
+    "start": "concurrently \"npm run start-node\" \"npm run start-go\"",
+    "start-with-logs": "concurrently -k -n \"NODE,GO\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run start-node\" \"npm run start-go\""
   },
   "keywords": [],
   "author": "",
