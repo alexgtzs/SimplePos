@@ -8,7 +8,7 @@ const DashboardSelector = () => {
   
   switch(role) {
     case 'admin':
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to="/admin" replace />;
     case 'vendedor':
       return <Navigate to="/vendedor/dashboard" replace />;
     case 'consultor':

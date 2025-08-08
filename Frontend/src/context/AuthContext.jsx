@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext();
@@ -6,7 +5,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState({
     isAuthenticated: false,
-    role: null,
+    role: null, // Asegúrate de que esto está presente
     userData: null,
     loading: true
   });
@@ -14,13 +13,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    
-    if (token && role) {
+    const email = localStorage.getItem('email');
+
+    if (token && role && email) {
       setAuthState({
         isAuthenticated: true,
         role: role,
-        userData: userData,
+        userData: { email },
         loading: false
       });
     } else {
@@ -34,18 +33,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (data) => {
-    localStorage.setItem('token', data.access_token);
+    localStorage.setItem('token', data.token);
     localStorage.setItem('role', data.role);
-    localStorage.setItem('userData', JSON.stringify({
-      username: data.username,
-      email: data.email
-    }));
-    
+    localStorage.setItem('email', data.email);
+
     setAuthState({
       isAuthenticated: true,
       role: data.role,
       userData: {
-        username: data.username,
         email: data.email
       },
       loading: false
@@ -55,7 +50,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    localStorage.removeItem('userData');
+    localStorage.removeItem('email');
     setAuthState({
       isAuthenticated: false,
       role: null,
@@ -65,7 +60,15 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout }}>
+    <AuthContext.Provider value={{
+      ...authState,
+      login,
+      logout,
+      // Añade estos helpers para mayor claridad
+      isAdmin: authState.role === 'admin',
+      isVendedor: authState.role === 'vendedor',
+      isConsultor: authState.role === 'consultor'
+    }}>
       {children}
     </AuthContext.Provider>
   );

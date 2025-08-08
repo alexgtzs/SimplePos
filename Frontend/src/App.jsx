@@ -25,12 +25,19 @@ import ConsultorDashboardPage from './pages/consultor/ConsultorDashboardPage'; /
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
+import DashboardSelector from './components/DashboardSelector'; // Importación añadida
+
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
-
+      <Route path="/dashboard-selector" element={
+        <ProtectedRoute>
+          <DashboardSelector />
+        </ProtectedRoute>
+      } />
       {/* Rutas protegidas */}
       <Route path="/admin" element={
         <ProtectedRoute requiredRole="admin">
@@ -42,7 +49,7 @@ function AppRoutes() {
         <Route path="users/create" element={<UserCreatePage />} />
         <Route path="users/edit/:id" element={<UserEditPage />} />
       </Route>
-      
+
       {/* Nuevas rutas para vendedor */}
       <Route path="/vendedor" element={
         <ProtectedRoute requiredRole="vendedor">
@@ -51,7 +58,7 @@ function AppRoutes() {
       }>
         <Route index element={<VendedorDashboardPage />} />
       </Route>
-      
+
       {/* Nuevas rutas para consultor */}
       <Route path="/consultor" element={
         <ProtectedRoute requiredRole="consultor">
@@ -60,7 +67,7 @@ function AppRoutes() {
       }>
         <Route index element={<ConsultorDashboardPage />} />
       </Route>
-      
+
       <Route path="*" element={<div>Página no encontrada</div>} />
     </Routes>
   );

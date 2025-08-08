@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
 
-const API_URL =  'http://localhost:8000';
+const API_URL = 'http://localhost:8080';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -26,8 +25,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const { logout } = useAuth();
-      logout();
+      // Eliminar token inválido
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('email');
+      
+      // Redirigir a login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

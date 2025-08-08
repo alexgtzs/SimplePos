@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext'; // Crearemos este contexto
+import { useAuth } from '../../context/AuthContext';
 
-const API_URL =  'http://localhost:8000';
+const API_URL = 'http://localhost:8080';
 
 const LoginForm = () => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '', // Cambiado de username a email
     password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth(); // Usaremos este hook
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,25 +29,37 @@ const LoginForm = () => {
     setError('');
 
     try {
-      const response = await axios.post(`${API_URL}/token`, formData);
-
-      // Obtener información adicional del usuario
-      const userResponse = await api.get('/users/me', {
-        headers: { Authorization: `Bearer ${response.data.access_token}` }
-      });
-
+      // Enviar credenciales al endpoint /login
+      const response = await axios.post(`${API_URL}/login`, credentials);
+      
+      // Extraer token de la respuesta
+      const token = response.data.token;
+      
+      // Obtener información del usuario del token
+      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      const userEmail = decodedToken.sub;
+      const userRole = decodedToken.role;
+      
+      // Llamar a la función de login del contexto
       login({
-        ...response.data,
-        username: userResponse.data.username,
-        email: userResponse.data.email
+        token,
+        email: userEmail,
+        role: userRole
       });
 
-      navigate('/dashboard');
+      navigate('/dashboard-selector');
     } catch (error) {
       if (error.response) {
-        setError(error.response.data.detail || 'Credenciales incorrectas');
+        // Manejar errores específicos del backend
+        if (error.response.status === 401) {
+          setError('Credenciales incorrectas');
+        } else if (error.response.data) {
+          setError(error.response.data);
+        } else {
+          setError('Error en el servidor');
+        }
       } else {
-        setError('Error al conectar con el servidor');
+        setError('Error de conexión con el servidor');
       }
     } finally {
       setLoading(false);
@@ -69,16 +81,16 @@ const LoginForm = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="username" className="block text-gray-700 mb-2">Usuario</label>
+          <label htmlFor="email" className="block text-gray-700 mb-2">Correo Electrónico</label>
           <input
-            type="text"
-            id="username"
-            name="username"
-            value={credentials.username}
+            type="email"
+            id="email"
+            name="email"
+            value={credentials.email}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            autoComplete="username"
+            autoComplete="email"
           />
         </div>
 
@@ -99,8 +111,9 @@ const LoginForm = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${loading ? 'opacity-75 cursor-not-allowed' : ''
-            }`}
+          className={`w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
+            loading ? 'opacity-75 cursor-not-allowed' : ''
+          }`}
         >
           {loading ? 'Iniciando sesión...' : 'Ingresar'}
         </button>
