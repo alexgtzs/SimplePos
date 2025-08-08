@@ -6,8 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-node": "node ./node/src/server.js",
-    "start-go": "go run ./go/main.go",
-    "start": "concurrently \"npm run start-node\" \"npm run start-go\"",
+    "start": "concurrently \"npm run start-node\"",
     "start-with-logs": "concurrently -k -n \"NODE,GO\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run start-node\" \"npm run start-go\""
   },
   "keywords": [],
