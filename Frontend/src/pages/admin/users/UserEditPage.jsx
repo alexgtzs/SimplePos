@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const UserEditPage = () => {
   const { id } = useParams();
-  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: '',
-    status: 'Activo'
+    role_name: 'vendedor'
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Simulación de carga de datos del usuario
     const fetchUser = async () => {
-      // En una aplicación real, harías una llamada a la API aquí
-      const mockUser = {
-        id: id,
-        name: 'Juan Pérez',
-        email: 'juan@example.com',
-        role: 'Administrador',
-        status: 'Activo'
-      };
-      setUser(mockUser);
-      setFormData(mockUser);
+      try {
+        // Obtener usuario desde el backend
+        const response = await api.get(`/admin/users/${id}`);
+        setFormData({
+          name: response.data.name,
+          email: response.data.email,
+          role_name: response.data.role
+        });
+        setLoading(false);
+      } catch (err) {
+        setError('Error al cargar el usuario');
+        setLoading(false);
+      }
     };
 
     fetchUser();
@@ -37,17 +44,58 @@ const UserEditPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Lógica para actualizar usuario
-    console.log('Usuario actualizado:', formData);
+    setSaving(true);
+    setError('');
+    
+    // Verificar permisos
+    if (!isAdmin) {
+      setError('Solo los administradores pueden editar usuarios');
+      setSaving(false);
+      return;
+    }
+    
+    try {
+      // Actualizar usuario en el backend
+      await api.put(`/admin/users/${id}`, {
+        name: formData.name,
+        email: formData.email,
+        role_name: formData.role_name
+      });
+      
+      // Redirigir a la lista de usuarios
+      navigate('/admin/users');
+    } catch (err) {
+      setError(err.response?.data || 'Error al actualizar el usuario');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (!user) return <div>Cargando...</div>;
+  const roleOptions = [
+    { value: 'admin', label: 'Administrador' },
+    { value: 'vendedor', label: 'Vendedor' },
+    { value: 'consultor', label: 'Consultor' }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Editar Usuario: {user.name}</h1>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Editar Usuario</h1>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
       
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit}>
@@ -59,7 +107,7 @@ const UserEditPage = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -71,7 +119,7 @@ const UserEditPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -79,27 +127,17 @@ const UserEditPage = () => {
             <div>
               <label className="block text-gray-700 mb-2">Rol</label>
               <select
-                name="role"
-                value={formData.role}
+                name="role_name"
+                value={formData.role_name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                <option value="Administrador">Administrador</option>
-                <option value="Supervisor">Supervisor</option>
-                <option value="Cajero">Cajero</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 mb-2">Estado</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg"
-              >
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
+                {roleOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -107,15 +145,20 @@ const UserEditPage = () => {
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"
-              className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
+              onClick={() => navigate('/admin/users')}
+              className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+              disabled={saving}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
+                saving ? 'opacity-75 cursor-not-allowed' : ''
+              }`}
+              disabled={saving}
             >
-              Guardar Cambios
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </form>
