@@ -127,7 +127,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
     // Generate JWT con nombre de rol
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
         "sub":  user.Email,
-        "exp":  time.Now().Add(time.Hour * 8).Unix(),
+        "exp":  time.Now().Add(time.Hour * 24).Unix(),
         "role": role.Name,
     })
 

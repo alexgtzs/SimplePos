@@ -30,9 +30,9 @@ api.interceptors.response.use(
       localStorage.removeItem('role');
       localStorage.removeItem('email');
       
-      // Redirigir a login
+      // Redirigir a login con mensaje
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        window.location.href = '/login?session=expired';
       }
     }
     return Promise.reject(error);

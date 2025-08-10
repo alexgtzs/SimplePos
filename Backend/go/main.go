@@ -5,7 +5,6 @@ import (
 	"auth-service/middleware"
 	"auth-service/models"
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -57,6 +56,7 @@ func main() {
     authHandler := handlers.NewAuthHandler(db.Collection("users"))
     salesHandler := handlers.NewSalesHandler(db.Collection("sales"))
     roleHandler := handlers.NewRoleHandler(db.Collection("roles"))
+	userHandler := handlers.NewUserHandler(db.Collection("users")) // Nuevo handler
 
     // Setup router
     router := mux.NewRouter()
@@ -76,9 +76,16 @@ func main() {
     // Admin routes
     adminRouter := authRouter.PathPrefix("/admin").Subrouter()
     adminRouter.Use(middleware.RoleMiddleware("admin"))
-    adminRouter.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-        json.NewEncoder(w).Encode(map[string]string{"message": "Admin dashboard"})
-    }).Methods("GET", "OPTIONS")
+    // adminRouter.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+    //     json.NewEncoder(w).Encode(map[string]string{"message": "Admin dashboard"})
+    // }).Methods("GET", "OPTIONS")
+
+	// User management endpoints
+	adminRouter.HandleFunc("/users", userHandler.ListUsers).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/users", userHandler.CreateUser).Methods("POST", "OPTIONS")
+	adminRouter.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT", "OPTIONS")
+	adminRouter.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE", "OPTIONS")
 
     // Role management endpoints
     adminRouter.HandleFunc("/roles", roleHandler.CreateRole).Methods("POST", "OPTIONS")
@@ -87,13 +94,13 @@ func main() {
     adminRouter.HandleFunc("/roles/{id}", roleHandler.DeleteRole).Methods("DELETE", "OPTIONS")
 
     // Configure CORS
-    c := cors.New(cors.Options{
-        AllowedOrigins:   []string{"http://localhost:5173"},
-        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowedHeaders:   []string{"*"},
-        AllowCredentials: true,
-        Debug:            true,
-    })
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
 
     // Wrap the router with the CORS middleware
     handler := c.Handler(router)

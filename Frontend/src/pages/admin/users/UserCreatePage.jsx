@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api'; // Asegúrate de tener tu archivo api configurado
-import { useAuth } from '../../context/AuthContext';
+import api from '../../../services/api'; // Asegúrate de tener tu archivo api configurado
+import { useAuth } from '../../../context/AuthContext';
 
 const UserCreatePage = () => {
   const navigate = useNavigate();

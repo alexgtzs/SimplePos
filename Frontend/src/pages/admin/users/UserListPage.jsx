@@ -1,30 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 const UserListPage = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { isAdmin } = useAuth();
+  const { isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Obtener usuarios desde el backend
         const response = await api.get('/admin/users');
-        setUsers(response.data);
+
+        // Verificar que la respuesta es un array
+        if (Array.isArray(response.data)) {
+          setUsers(response.data);
+        } else {
+          setError('Formato de datos inesperado');
+          setUsers([]);
+        }
         setLoading(false);
       } catch (err) {
-        setError('Error al cargar los usuarios');
+        if (err.response?.status === 401) {
+          logout();
+          navigate('/login');
+        } else if (err.response?.status === 403) {
+          setError('No tienes permisos para ver esta página');
+        } else {
+          setError('Error al cargar los usuarios');
+        }
         setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [logout, navigate]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,7 +46,7 @@ const UserListPage = () => {
   );
 
   const getRoleDisplay = (role) => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'Administrador';
       case 'vendedor': return 'Vendedor';
       case 'consultor': return 'Consultor';
@@ -41,7 +55,7 @@ const UserListPage = () => {
   };
 
   const getRoleColor = (role) => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'bg-purple-100 text-purple-800';
       case 'vendedor': return 'bg-blue-100 text-blue-800';
       case 'consultor': return 'bg-green-100 text-green-800';
