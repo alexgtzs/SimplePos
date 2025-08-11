@@ -10,3 +10,15 @@ entrar a backend luego entrar a go
 1. cd backend
 2. cd go
 3 ejecutar comando go run main.go
+
+
+
+crear .env en la carpeta de el servidor de go y pegar esto
+
+MONGO_URI="mongodb://localhost:27017"
+JWT_SECRET="zZ1Oupj_19aYQdWBrKFVTpQDHDKAJrGYcdjjn29b8l4"
+DB_NAME="authdb"
+ADMIN_EMAIL="admin@system.com"
+ADMIN_PASSWORD="AdminPassword123"
+SERVER_HOST="localhost"
+SERVER_PORT="8080"
