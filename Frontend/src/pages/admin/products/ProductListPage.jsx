@@ -1,19 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { productAPI } from '../../services/api';
 
 const ProductListPage = () => {
-  const [products, setProducts] = useState([
-    { id: 1, name: 'iPhone 13', category: 'Electrónicos', price: 999.99, stock: 45, status: 'Disponible' },
-    { id: 2, name: 'Samsung Galaxy S22', category: 'Electrónicos', price: 899.99, stock: 32, status: 'Disponible' },
-    { id: 3, name: 'Laptop HP Pavilion', category: 'Computadoras', price: 749.99, stock: 0, status: 'Agotado' }
-  ]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
 
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const response = await productAPI.getAll();
+        setProducts(response.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+      try {
+        await productAPI.delete(id);
+        setProducts(products.filter(p => p.id_producto !== id));
+      } catch (err) {
+        console.error('Error deleting product:', err);
+      }
+    }
+  };
+
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.marca_nombre && product.marca_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  if (loading) return <div>Cargando productos...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
@@ -51,8 +78,8 @@ const ProductListPage = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -60,26 +87,28 @@ const ProductListPage = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${product.price.toFixed(2)}</td>
+                <tr key={product.id_producto}>
+                  <td className="px-6 py-4 whitespace-nowrap">{product.nombre}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{product.marca_nombre}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${product.precio_venta.toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{product.stock}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      product.status === 'Disponible' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {product.status}
+                    <span className={`px-2 py-1 text-xs rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                      {product.stock > 0 ? 'Disponible' : 'Agotado'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
-                      to={`/admin/products/edit/${product.id}`}
+                      to={`/admin/products/edit/${product.id_producto}`}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
                       Editar
                     </Link>
-                    <button className="text-red-600 hover:text-red-900">
+                    <button
+                      onClick={() => handleDelete(product.id_producto)}
+                      className="text-red-600 hover:text-red-900"
+                    >
                       Eliminar
                     </button>
                   </td>
