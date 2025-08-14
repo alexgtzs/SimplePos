@@ -1,43 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { productAPI } from '../../services/api';
 
 const ProductEditPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    price: '',
-    cost: '',
-    stock: '',
-    barcode: '',
-    image: null
+    nombre: '',
+    descripcion: '',
+    modelo: '',
+    precio_compra: '',
+    precio_venta: '',
+    sku: '',
+    codigo_barras: '',
+    id_marca: 1,
+    id_iva: 1,
+    stock: 0
   });
 
   const categories = ['Electrónicos', 'Computadoras', 'Ropa', 'Hogar', 'Alimentos'];
 
   useEffect(() => {
     // Simulación de carga de datos del producto
-    const fetchProduct = async () => {
-      // En una aplicación real, harías una llamada a la API aquí
-      const mockProduct = {
-        id: id,
-        name: 'iPhone 13',
-        description: 'El último smartphone de Apple con chip A15 Bionic',
-        category: 'Electrónicos',
-        price: 999.99,
-        cost: 750.00,
-        stock: 45,
-        barcode: '123456789012',
-        status: 'Disponible'
-      };
-      setProduct(mockProduct);
-      setFormData(mockProduct);
+    const loadProduct = async () => {
+      try {
+        const response = await productAPI.getById(id);
+        setProduct(response.data);
+        setFormData({
+          nombre: response.data.nombre,
+          descripcion: response.data.descripcion,
+          modelo: response.data.modelo,
+          precio_compra: response.data.precio_compra,
+          precio_venta: response.data.precio_venta,
+          sku: response.data.sku,
+          codigo_barras: response.data.codigo_barras,
+          id_marca: response.data.id_marca,
+          id_iva: response.data.id_iva,
+          stock: response.data.stock
+        });
+      } catch (error) {
+        console.error('Error cargando producto:', error);
+        navigate('/admin/products');
+      }
     };
 
-    fetchProduct();
-  }, [id]);
+    loadProduct();
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,10 +63,19 @@ const ProductEditPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Lógica para actualizar producto
-    console.log('Producto actualizado:', formData);
+    try {
+      await productAPI.update(id, {
+        ...formData,
+        precio_venta: parseFloat(formData.precio_venta),
+        precio_compra: parseFloat(formData.precio_compra),
+        stock: parseInt(formData.stock)
+      });
+      navigate('/admin/products');
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   };
 
   if (!product) return <div>Cargando...</div>;

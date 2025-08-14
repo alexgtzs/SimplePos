@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { productAPI } from '../../services/api';
 
 const ProductCreatePage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: 'Electrónicos',
-    price: '',
-    cost: '',
-    stock: '',
-    barcode: '',
-    image: null
+    nombre: '',
+    descripcion: '',
+    modelo: '',
+    precio_compra: '',
+    precio_venta: '',
+    sku: '',
+    codigo_barras: '',
+    id_marca: 1,
+    id_iva: 1,
+    stock: 0
   });
 
   const categories = ['Electrónicos', 'Computadoras', 'Ropa', 'Hogar', 'Alimentos'];
@@ -29,11 +34,21 @@ const ProductCreatePage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Lógica para crear producto
-    console.log('Producto creado:', formData);
+    try {
+      await productAPI.create({
+        ...formData,
+        precio_venta: parseFloat(formData.precio_venta),
+        precio_compra: parseFloat(formData.precio_compra),
+        stock: parseInt(formData.stock)
+      });
+      navigate('/admin/products');
+    } catch (error) {
+      console.error('Error creating product:', error);
+    }
   };
+
 
   return (
     <div>

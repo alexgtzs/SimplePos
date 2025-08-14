@@ -39,4 +39,16 @@ api.interceptors.response.use(
   }
 );
 
+//Productos
+// Exporta funciones específicas para productos
+export const productAPI = {
+  getAll: () => api.get('/api/products'),
+  getById: (id) => api.get(`/api/products/${id}`),
+  create: (productData) => api.post('/api/products', productData),
+  update: (id, productData) => api.put(`/api/products/${id}`, productData),
+  delete: (id) => api.delete(`/api/products/${id}`),
+  getCategories: () => api.get('/api/product-categories') // Si tienes este endpoint
+};
+
+
 export default api;
